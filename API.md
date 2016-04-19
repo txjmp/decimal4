@@ -7,12 +7,12 @@ type Decimal6 int64
 
 ##Decimal4 Methods
 
-All computation methods return a Decimal4 value.
-All computation methods will panic on overflow.
+####Computation Methods 
 
-###Computation Methods  
+* all return a single Decimal4 value
+* all panic on overflow 
 
-.Multiply(x Decimal4) Decimal4  
-    returns this * x, rounded to 4 places  
-    
-.MultiplyBig()
+.Multiply(x Decimal4)  
+* returns this * x, rounded to 4 places  
+
+.MultiplyBig(x Decimal4) - 
