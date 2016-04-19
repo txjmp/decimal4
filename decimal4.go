@@ -3,9 +3,9 @@ package decimal4
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"math"
 	"strconv"
-	"log"
 )
 
 var Decimal4StringPlaces string = "4" // precision used by String method
@@ -18,13 +18,13 @@ func (this Decimal4) Multiply(x Decimal4) Decimal4 {
 	if a == 0 {
 		return 0
 	}
-	if a / x != this {
+	if a/x != this {
 		log.Panic("Decimal4 Multiply Overflow, this=", this, " x=", x)
 	}
-	if a < 0 {
-		a -= 5000
-	} else {
+	if a > 0 {
 		a += 5000
+	} else {
+		a -= 5000
 	}
 	return a / 10000
 }
@@ -34,97 +34,124 @@ func (this Decimal4) Multiply6(x Decimal6) Decimal4 {
 	if a == 0 {
 		return 0
 	}
-	if a / x != Decimal6(this) {
+	if a/x != Decimal6(this) {
 		log.Panic("Decimal4 Multiply6 Overflow, this=", this, " x=", x)
 	}
-	if a < 0 {
-		a -= 500000
-	} else {
+	if a > 0 {
 		a += 500000
+	} else {
+		a -= 500000
 	}
 	return Decimal4(a / 1000000)
 }
 
-var bigLimit Decimal4 = 100000000 // 10000.0000, if inputs less than, use normal method
-
 // MultiplyBig - Allows for a larger maximum value (before exceeding int64 max).
-// Last 2 decimal places are truncated on input value > bigLimit
+// Last 2 decimal places are truncated on largest value
 // Intermediate product value will only contain 6 implied decimal places rather than 8.
-// If neither value is > bigLimit, calls Multiply method.
 func (this Decimal4) MultiplyBig(x Decimal4) Decimal4 {
-	var a, b Decimal4
-	if (this > 0 && this > x) || (this < 0 && this < x) {
+	var a, b, c Decimal4
+	if Abs(this) > Abs(x) {
 		a = this
 		b = x
 	} else {
-		a = x 
+		a = x
 		b = this
 	}
-	if a < bigLimit {  // both values small enough that regular multiply can be used
-		return this.Multiply(x)
-	}
-	a2 := a / 100  // knock off last 2 decimal places of largest value
-	c := a2 * b
+	a = a / 100 // knock off last 2 decimal places of largest value
+	c = a * b
 	if c == 0 {
 		return 0
 	}
-	if c / a2 != b {
+	if c/a != b {
 		log.Panic("Decimal4 MultiplyBig Overflow, this=", this, " x=", x)
 	}
-	if c < 0 {
-		c -= 50
-	} else {
+	if c > 0 {
 		c += 50
+	} else {
+		c -= 50
 	}
 	return c / 100
 }
 
 func (this Decimal4) MultiplyBig6(x Decimal6) Decimal4 {
-	this2 := Decimal6(this / 100)  // knock off last 2 decimal places
-	a := this2 * x
-	if a == 0 {
-		return 0
-	}
-	if a / x != this2 {
-		log.Panic("Decimal4 MultiplyBig6 Overflow, this=", this, " x=", x)
-	}
-	if a < 0 {
-		a -= 5000
-	} else {
-		a += 5000
-	}
-	return Decimal4(a / 10000)
-}
-// 4 decimal place precision with rounding
-func (this Decimal4) Divide(x Decimal4) Decimal4 {
-	a := this * 100000 // shift over 5 places rather than 4, so result can be rounded
-	if a / 100000 != this {
-		log.Panic("Decimal4 Divide Overflow, this=", this, " x=", x, " a=", a)
-	}
-	b := a / x
+	a := Decimal6(this / 100) // knock off last 2 decimal places
+	b := a * x
 	if b == 0 {
 		return 0
 	}
-	if b < 0 {
-		b -= 5
+	if b/x != a {
+		log.Panic("Decimal4 MultiplyBig6 Overflow, this=", this, " x=", x)
+	}
+	if b > 0 {
+		b += 5000
 	} else {
+		b -= 5000
+	}
+	return Decimal4(b / 10000)
+}
+
+func (this Decimal4) MultiplyInt(x int) Decimal4 {
+	a := int64(this) * int64(x)
+	if a == 0 {
+		return 0
+	}
+	if a/int64(x) != int64(this) {
+		log.Panic("Decimal4 MultiplyInt Overflow, this=", this, " x=", x)
+	}
+	return Decimal4(a)
+}
+
+// 4 decimal place precision with rounding
+func (this Decimal4) Divide(x Decimal4) Decimal4 {
+	if this == 0 {
+		return 0
+	}
+	a := this * 100000 // shift over 5 places rather than 4, so result can be rounded
+	if a/100000 != this {
+		log.Panic("Decimal4 Divide Overflow, this=", this, " x=", x, " a=", a)
+	}
+	b := a / x
+	if b > 0 {
 		b += 5
+	} else {
+		b -= 5
 	}
 	return b / 10
 }
 
 // 3 decimal place precision, no rounding
 func (this Decimal4) DivideBig(x Decimal4) Decimal4 {
+	if this == 0 {
+		return 0
+	}
 	a := this * 1000
-	if a / 1000 != this {
+	if a/1000 != this {
 		log.Panic("Decimal4 DivideBig Overflow, this=", this, " x=", x, " a=", a)
 	}
 	b := (a / x) * 10
-	if b / 10 != (a / x) {
+	if b/10 != (a / x) {
 		log.Panic("Decimal4 DivideBig Overflow, this=", this, " x=", x, " a=", a)
 	}
 	return b
 }
+
+func (this Decimal4) DivideInt(x int) Decimal4 {
+	if this == 0 {
+		return 0
+	}
+	a := int64(this) * 10 // shift over 1 position so result can be rounded
+	if a/10 != int64(this) {
+		log.Panic("Decimal4 DivideInt Overflow, this=", this, " x=", x, " a=", a)
+	}
+	b := a / int64(x)
+	if b > 0 {
+		b += 5
+	} else {
+		b -= 5
+	}
+	return Decimal4(b / 10)
+}
+
 // return true if difference in values is < .1
 func (this Decimal4) CloseTo(x Decimal4) bool {
 	diff := this - x
@@ -231,6 +258,15 @@ func NewDecimal6(x float64) Decimal6 {
 	} else {
 		return Decimal6((x + .0000005) * 1000000)
 	}
+}
+
+func Abs(x Decimal4) Decimal4 {
+	if x > 0 {
+		return x
+	} else if x < 0 {
+		return -x
+	}
+	return 0
 }
 
 // --- funcs that round float numbers ------------------------

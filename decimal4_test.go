@@ -10,11 +10,11 @@ type data struct {
 }
 
 func TestNew(t *testing.T) {
-	minOk := New(200000000000)  // 200,000,000,000
+	minOk := New(200000000000) // 200,000,000,000
 	var a, i int64
 	var b float64
 	var c Decimal4
-	for i = 1; i<math.MaxInt64 ;i++ {
+	for i = 1; i < math.MaxInt64; i++ {
 		a += i
 		b = float64(a) / 10000
 		c = New(b)
@@ -27,8 +27,8 @@ func TestNew(t *testing.T) {
 	}
 	t.Log(i, ", values checked, largest value confirmed: ", c.Format(4))
 
-	a = 10000000000000  // 1,000,000,000.0000
-	for i = 1; i<100000000; i++ {
+	a = 10000000000000 // 1,000,000,000.0000
+	for i = 1; i < 100000000; i++ {
 		a++
 		b = float64(a) / 10000
 		c = New(b)
@@ -44,9 +44,45 @@ func TestNew(t *testing.T) {
 	t.Log("New max input:", max, " output:", x.Format(4))
 }
 
+func TestNew6(t *testing.T) {
+	minOk := Decimal6(20000000000000) // 2,000,000,000
+	var a, i int64
+	var b float64
+	var c Decimal6
+	for i = 1; i < math.MaxInt64; i++ {
+		a += i
+		b = float64(a) / 1000000
+		c = NewDecimal6(b)
+		if a != int64(c) {
+			break
+		}
+	}
+	if c < minOk {
+		t.Fatal("did not reach minimum, largest value confirmed:", c)
+	}
+	t.Log(i, ", values checked, largest value confirmed: ", c)
+
+	a = 10000000000000 // 1,000,000,000.0000
+	for i = 1; i < 100000000; i++ {
+		a++
+		b = float64(a) / 1000000
+		c = NewDecimal6(b)
+		if a != int64(c) {
+			t.Fatal("New() not exact: should be:", a, "was:", c)
+		}
+	}
+	t.Log("all possible values confirmed between 1,000,000,000 and ", c)
+
+	var max float64 = float64(math.MaxInt64 / 10000000) // > 922 billion
+	max = max - 1 + .99
+	x := NewDecimal6(max)
+	t.Log("New6 max input:", max, " output:", x)
+}
+
 func TestMultiply(t *testing.T) {
 	var max float64 = float64(math.MaxInt64 / 100000000) // > 92 billion
-	t.Log("multiply max:", max)
+	var min float64 = float64(math.MinInt64 / 100000000) // < -92 billion
+	t.Log("multiply max:", max, "min: ", min)
 	data := []data{
 		{0, 0, 0},
 		{0, 1, 0},
@@ -60,10 +96,14 @@ func TestMultiply(t *testing.T) {
 		{555.5555, 333.3333, 185185.1481},
 		{.5555, .5555, .3086},
 		{.1111, .1111, .0123},
-		{9999.9999, 9999.9999, 99999998.0000 },
-		{4500000, 20000, 90000000000},  // 90,000,000,000
+		{9999.9999, 9999.9999, 99999998.0000},
+		{4500000, 20000, 90000000000}, // 90,000,000,000
+		{-7321907.6324, -32.3976, 237212234.7114},
+		{8888.8888, -1, -8888.8888},
 		{max, 1, max},
-		//{max + 1, 1, 0}, // should cause overflow panic
+		{min, 1, min},
+		//{max + 1, 1, max+1}, // should cause overflow panic
+		//{min - 1, 1, min-1}, // should cause overflow panic (verified apr182016)
 	}
 	var a, b, c Decimal4
 	for i, v := range data {
@@ -87,6 +127,7 @@ func TestMultiplyBig(t *testing.T) {
 		{999999999999.99, 1, 999999999999.99},
 		{1000000000000.01, 1, 1000000000000.01}, // 1 trillion
 		{12345.67, 12345.67, 152415567.7489},
+		{-5000.0099, 2, -10000}, // largest abs val should have 2 places truncated
 		{83337222.0001, .0001, 8333.7222},
 		{max, 1, max},
 		//{max + 1, 1, 0}, // should cause overflow panic
@@ -103,7 +144,7 @@ func TestMultiplyBig(t *testing.T) {
 }
 
 func TestMultiply6(t *testing.T) {
-	var max float64 = float64(math.MaxInt64 / 10000000000) // > 900 million	
+	var max float64 = float64(math.MaxInt64 / 10000000000) // > 900 million
 	t.Log("multiply6 max:", max)
 	data := []data{
 		{0, 0, 0},
@@ -114,8 +155,9 @@ func TestMultiply6(t *testing.T) {
 		{1000000, .999999, 999999},
 		{1000000, 10.000375, 10000375},
 		{987654.4321, .987654, 975460.8505},
+		{-33.3333, 73684.009999, -2456131.2105},
 		{max, 1, max},
-		//{max + 1, 1, 0}, // should cause overflow panic
+		//{max + 1, 1, max + 1}, // should cause overflow panic, verified 4/18/2016
 	}
 	var a, c Decimal4
 	var b Decimal6
@@ -130,19 +172,19 @@ func TestMultiply6(t *testing.T) {
 }
 
 func TestMultiplyBig6(t *testing.T) {
-	var max float64 = float64(math.MaxInt64 / 100000000) // > 92 billion	
-	t.Log("multiplyBig6 max:", max)	
+	var max float64 = float64(math.MaxInt64 / 100000000) // > 92 billion
+	t.Log("multiplyBig6 max:", max)
 	data := []data{
 		{0, 0, 0},
 		{1, 1, 1},
 		{-1, 1, -1},
 		{1, .123456, .1235},
-		{3849.27, .05125, 197.2751 },
+		{3849.27, .05125, 197.2751},
 		{555.5555, .000025, .0139},
 		{1000000, .999999, 999999},
 		{1000000, 10.000375, 10000375},
 		{987654.43, .987654, 975460.8484},
-		{9000000000, 1.000001, 9000009000},
+		{9000000000, -1.000001, -9000009000},
 		{max, 1, max},
 		//{max + 1, 1, 0}, // should cause overflow panic (verified 4/15/2016)
 	}
@@ -157,9 +199,34 @@ func TestMultiplyBig6(t *testing.T) {
 		}
 	}
 }
+
+func TestMultiplyInt(t *testing.T) {
+	type input struct {
+		a float64
+		b int
+		c float64
+	}
+	data := []input{
+		{0, 0, 0},
+		{1, 1, 1},
+		{-1, 1, -1},
+		{1.1111, 123456, 137171.9616},
+		{9876543.1234, 599, 5916049330.9166},
+		//{max + 1, 1, 0}, // should cause overflow panic (verified 4/15/2016)
+	}
+	var a, b Decimal4
+	for i, v := range data {
+		a = New(v.a)
+		b = a.MultiplyInt(v.b)
+		if b != New(v.c) {
+			t.Errorf("data[%d]: b should be %f, but is %s", i, v.c, b)
+		}
+	}
+}
+
 func TestDivide(t *testing.T) {
-	var max float64 = float64(math.MaxInt64 / 1000000000) // > 9 billion	
-	t.Log("divide max:", max)	
+	var max float64 = float64(math.MaxInt64 / 1000000000) // > 9 billion
+	t.Log("divide max:", max)
 	data := []data{
 		{0, 1, 0},
 		{1, 1, 1},
@@ -185,8 +252,8 @@ func TestDivide(t *testing.T) {
 }
 
 func TestDivideBig(t *testing.T) {
-	var max float64 = float64(math.MaxInt64 / 10000000) // > 900 billion	
-	t.Log("divide max:", max)	
+	var max float64 = float64(math.MaxInt64 / 10000000) // > 900 billion
+	t.Log("divide max:", max)
 	data := []data{
 		{0, 1, 0},
 		{1, 1, 1},
@@ -196,7 +263,7 @@ func TestDivideBig(t *testing.T) {
 		{2222222.22, 2222222.22, 1},
 		{1234567.01, .123, 10037130.162},
 		{999, .4567, 2187.431},
-		{2555444333, 9.125, 280048694.027},
+		{2555444333, -9.125, -280048694.027},
 		{max, 1, max},
 		// {max + 1, 1, 0}, // should cause panic overflow, verified apr152016
 	}
@@ -205,6 +272,32 @@ func TestDivideBig(t *testing.T) {
 		a = New(v.a)
 		b = New(v.b)
 		c = a.DivideBig(b)
+		if c != New(v.c) {
+			t.Errorf("data[%d]: c should be %f, but is %s", i, v.c, c)
+		}
+	}
+}
+
+func TestDivideInt(t *testing.T) {
+	type input struct {
+		a float64
+		b int
+		c float64
+	}
+	data := []input{
+		{0, 1, 0},
+		{1, 1, 1},
+		{-1, 1, -1},
+		{-1, -1, 1},
+		{100, 5, 20},
+		{9999.9999, 9, 1111.1111},
+		{1234567.0001, 123, 10037.1301},
+		{999, -4567, -.2187},
+	}
+	var a, c Decimal4
+	for i, v := range data {
+		a = New(v.a)
+		c = a.DivideInt(v.b)
 		if c != New(v.c) {
 			t.Errorf("data[%d]: c should be %f, but is %s", i, v.c, c)
 		}
