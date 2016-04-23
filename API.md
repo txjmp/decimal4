@@ -17,9 +17,6 @@ func New(x float64) Decimal4
 func NewDecimal6(x float64) Decimal6  
 * returns x * 1000000 rounded and converted to Decimal6
 
-func Abs(x Decimal4) Decimal4  
-* returns absolute value of x
-
 ###Decimal4 Computation Methods 
 
 * all return a single Decimal4 value
@@ -66,12 +63,19 @@ DivideInt(x int)
 
 Round0(), Round1(), Round2(), Round3()
 * no parameters
-* each rounds value of this to specified decimal places and returns Decimal4
+* each rounds value of *this* to specified decimal places and returns Decimal4
 
-Format(places int) string
-* returns this formatted with specified decimal places and comma thousands separators
+Truncate0(), Truncate1(), Truncate2(), Truncate3()
+* no parameters
+* each truncates value of *this* to specified decimal places and returns Decimal4
+
+Fmt(widthPrecision float64, currency ...string) string
+* returns *this* formatted with width.precision and comma thousands separators
+* if optional currency is specified, output will have symbol prefixed to value
+* see included currency examples (Dollar, Euro, Yen, ...) at top of decimal4.go
+* example: d4Val.Fmt(12.2, Dollar) -> "   $1,234.56" 
 
 String() string
-* converts this to float64
+* converts *this* to float64
 * returns output of fmt.Sprintf using Decimal4StringPlaces to set decimal places shown
 
