@@ -23,9 +23,9 @@ func TestNew(t *testing.T) {
 		}
 	}
 	if c < minOk {
-		t.Fatal("did not reach minimum, largest value confirmed:", c.Format(4))
+		t.Fatal("did not reach minimum, largest value confirmed:", c)
 	}
-	t.Log(i, ", values checked, largest value confirmed: ", c.Format(4))
+	t.Log(i, ", values checked, largest value confirmed: ", c)
 
 	a = 10000000000000 // 1,000,000,000.0000
 	for i = 1; i < 100000000; i++ {
@@ -36,12 +36,12 @@ func TestNew(t *testing.T) {
 			t.Fatal("New() not exact: should be:", a, "was:", c)
 		}
 	}
-	t.Log("all possible values confirmed between 1,000,000,000 and ", c.Format(4))
+	t.Log("all possible values confirmed between 1,000,000,000 and ", c)
 
 	var max float64 = float64(math.MaxInt64 / 1000000) // > 9.2 trillion
 	max = max - 1 + .99
 	x := New(max)
-	t.Log("New max input:", max, " output:", x.Format(4))
+	t.Log("New max input:", max, " output:", x)
 }
 
 func TestNew6(t *testing.T) {
@@ -300,6 +300,109 @@ func TestDivideInt(t *testing.T) {
 		c = a.DivideInt(v.b)
 		if c != New(v.c) {
 			t.Errorf("data[%d]: c should be %f, but is %s", i, v.c, c)
+		}
+	}
+}
+
+func TestFmt(t *testing.T) {
+	type input struct {
+		val            Decimal4
+		widthPrecision float64
+		currency       string
+		output         string
+	}
+	data := []input{
+		{0, 1, "", "0"},
+		{10000, 1, "", "1"},
+		{11111, 5.2, "", " 1.11"},
+		{-233987654, 13.4, Dollar, "$-23,398.7654"},
+		{-7654, 13.4, Dollar, "     $-0.7654"},
+		{1234567891239, 15.2, Dollar, "$123,456,789.12"},
+		{1234567891239, 16.3, Dollar, "$123,456,789.124"},
+		{91234567891239, 18.4, "", "9,123,456,789.1239"},
+		{12345600, 10.2, Dollar, " $1,234.56"},
+		{12345600, .3, "", "1,234.560"},
+	}
+	for _, v := range data {
+		result := v.val.Fmt(v.widthPrecision, v.currency)
+		if result != v.output {
+			t.Errorf("expected:%s   got:%s", v.output, result)
+		}
+	}
+}
+
+func TestRound(t *testing.T) {
+	type input struct {
+		input  float64
+		places int
+		output string
+	}
+	data := []input{
+		{0, 0, "0.0000"},
+		{1, 0, "1.0000"},
+		{1.0001, 3, "1.0000"},
+		{1.0009, 3, "1.0010"},
+		{1.5, 0, "2.0000"},
+		{99.9, 3, "99.9000"},
+		{999.9999, 1, "1000.0000"},
+		{999.9099, 1, "999.9000"},
+		{999.9099, 2, "999.9100"},
+		{999.9099, 3, "999.9100"},
+		{10000000000.0006, 3, "10000000000.0010"},
+	}
+	var val, result Decimal4
+	for _, v := range data {
+		val = New(v.input)
+		switch v.places {
+		case 0:
+			result = val.Round0()
+		case 1:
+			result = val.Round1()
+		case 2:
+			result = val.Round2()
+		case 3:
+			result = val.Round3()
+		}
+		if result.String() != v.output {
+			t.Errorf("expected:%s   got:%s", v.output, result)
+		}
+	}
+}
+
+func TestTruncate(t *testing.T) {
+	type input struct {
+		input  float64
+		places int
+		output string
+	}
+	data := []input{
+		{0, 0, "0.0000"},
+		{1, 0, "1.0000"},
+		{1.0001, 3, "1.0000"},
+		{1.0009, 3, "1.0000"},
+		{1.5, 0, "1.0000"},
+		{99.9, 3, "99.9000"},
+		{999.9999, 1, "999.9000"},
+		{999.9099, 1, "999.9000"},
+		{999.9099, 2, "999.9000"},
+		{999.9099, 3, "999.9090"},
+		{10000000001.1999, 3, "10000000001.1990"},
+	}
+	var val, result Decimal4
+	for _, v := range data {
+		val = New(v.input)
+		switch v.places {
+		case 0:
+			result = val.Truncate0()
+		case 1:
+			result = val.Truncate1()
+		case 2:
+			result = val.Truncate2()
+		case 3:
+			result = val.Truncate3()
+		}
+		if result.String() != v.output {
+			t.Errorf("expected:%s   got:%s", v.output, result)
 		}
 	}
 }

@@ -12,20 +12,20 @@ This package provides decimal math using integers.
 * Values stored as int64: type Decimal4 int64.
 * Values have 4 implied decimal places, for example: 1 stored as 10000.
 * Computations can use one value with up to 6 decimal places, but result will only have 4.
-* Values can easily be rounded to fewer decimal places.
+* Values can easily be rounded or truncated to fewer decimal places.
 * Values can be directly compared, added, and subtracted.
-* Multiplication and division should use provided methods.
+* Multiplication and division calculations should use provided methods.
 * Value limits (inputs & results) imposed by Decimal4 methods:
     * .Multiply - 92,233,720,368 (~ -92 to +92 billion)
     * .MultiplyBig - 9,223,372,036,854 (~ -9 to +9 trillion)
     * .Multiply6 - 922,337,036 (~ -900 to +900 million)
-    * .Mutiply6Big - 92,233,720,368 (~ -92 to +92 billion)
+    * .MutiplyBig6 - 92,233,720,368 (~ -92 to +92 billion)
     * .Divide - 9,223,372,036 (~ -9 to +9 billion)
     * .DivideBig - 922,337,203,685 (~ -922 to +922 billion)
+* Multiply and Divide methods will panic on overflow.
+* Values can be formatted with commas and currency sign.
 
-Multiply and Divide methods will panic on overflow.
-
-###RECOMMENDATION - always use variables, not literals or constants, with Decimal4 operations 
+###RECOMMENDATION - always use variables, not literals or constants
 
     y := New(1.1)  // stores as 11000
     x := y.Multiply(5)  // compiler converts 5 to Decimal4 type, but value is treated as .0005
@@ -45,7 +45,7 @@ Requires 1 parameter, a float64, and returns a Decimal4 (int64) value. Based on 
 
     data := make([]Decimal4, len(inputs))
     for i, v := range inputs {
-        data[i] = New(v)
+        data[i] = Decimal4.New(v)
     }
     var total Decimal4
     for _, v := range data {
@@ -53,7 +53,7 @@ Requires 1 parameter, a float64, and returns a Decimal4 (int64) value. Based on 
     }
     average := total.DivideInt(len(data))
     
-    fmt.Printf("total: %s  average: %s", total.Format(4), average)
+    fmt.Printf("total: %s  average: %s", total.Fmt(.4), average)
     
     output -> total: 1,000.0000  average: 333.3333
 

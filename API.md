@@ -2,7 +2,11 @@
 
 ### Global Public Variables
 
-var Decimal4StringPlaces string = "4" // precision used by String method
+var Decimal4StringPlaces string = "4" // precision used by String method  
+  
+const Dollar = "\u0024"
+const Euro = "\u20AC"
+const Yen = "\u00A5"
 
 ### Types  
 

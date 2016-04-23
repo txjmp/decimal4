@@ -8,10 +8,22 @@ import (
 	"strconv"
 )
 
+const Dollar = "\u0024"
+const Euro = "\u20AC"
+const Yen = "\u00A5"
+const Yuan = "\u00A5"
+const Rupee = "\u20B9"
+const Ruble = "\u20BD"
+const Pound = "\u00A3"
+
 var Decimal4StringPlaces string = "4" // precision used by String method
 
 type Decimal4 int64
 type Decimal6 int64
+type Show struct { // optional parameter for Format method
+	Width    int
+	Currency string
+}
 
 func (this Decimal4) Multiply(x Decimal4) Decimal4 {
 	a := this * x
@@ -46,7 +58,7 @@ func (this Decimal4) Multiply6(x Decimal6) Decimal4 {
 }
 
 // MultiplyBig - Allows for a larger maximum value (before exceeding int64 max).
-// Last 2 decimal places are truncated on largest value
+// Last 2 decimal places are truncated on largest input value
 // Intermediate product value will only contain 6 implied decimal places rather than 8.
 func (this Decimal4) MultiplyBig(x Decimal4) Decimal4 {
 	var a, b, c Decimal4
@@ -166,33 +178,60 @@ func (this Decimal4) CloseTo(x Decimal4) bool {
 	return false
 }
 
-func (this Decimal4) Round0() Decimal4 {
-	if this < 0 {
-		return ((this - 5000) / 10000) * 10000
-	} else {
+// Round Methods
+// Result rounded to specified number of decimal places
+// Result still has 4 implied decimal places
+func (this Decimal4) Round0() Decimal4 { // 1235555 -> 1240000
+	if this == 0 {
+		return 0
+	}
+	if this > 0 {
 		return ((this + 5000) / 10000) * 10000
 	}
+	return ((this - 5000) / 10000) * 10000
 }
-func (this Decimal4) Round1() Decimal4 {
-	if this < 0 {
-		return ((this - 500) / 1000) * 1000
-	} else {
+func (this Decimal4) Round1() Decimal4 { // 1235555 -> 1236000
+	if this == 0 {
+		return 0
+	}
+	if this > 0 {
 		return ((this + 500) / 1000) * 1000
 	}
+	return ((this - 500) / 1000) * 1000
 }
-func (this Decimal4) Round2() Decimal4 {
-	if this < 0 {
-		return ((this - 50) / 100) * 100
-	} else {
+func (this Decimal4) Round2() Decimal4 { // 1235555 -> 1235600
+	if this == 0 {
+		return 0
+	}
+	if this > 0 {
 		return ((this + 50) / 100) * 100
 	}
+	return ((this - 50) / 100) * 100
 }
-func (this Decimal4) Round3() Decimal4 {
-	if this < 0 {
-		return ((this - 5) / 10) * 10
-	} else {
+func (this Decimal4) Round3() Decimal4 { // 1235555 -> 1235560
+	if this == 0 {
+		return 0
+	}
+	if this > 0 {
 		return ((this + 5) / 10) * 10
 	}
+	return ((this - 5) / 10) * 10
+}
+
+// Truncate Methods
+// Result truncated to specified number of decimal places
+// Result still has 4 implied decimal places, but truncated places are zero
+func (this Decimal4) Truncate0() Decimal4 {
+	return (this / 10000) * 10000 // 1235555 -> 1230000
+}
+func (this Decimal4) Truncate1() Decimal4 {
+	return (this / 1000) * 1000 // 1235555 -> 1235000
+}
+func (this Decimal4) Truncate2() Decimal4 {
+	return (this / 100) * 100 // 1235555 -> 1235500
+}
+func (this Decimal4) Truncate3() Decimal4 {
+	return (this / 10) * 10 // 1235555 -> 1235550
 }
 
 func (this Decimal4) String() string {
@@ -205,59 +244,88 @@ func (this Decimal6) String() string {
 	return fmt.Sprintf(format, float64(this)/1000000)
 }
 
-func (this Decimal4) Format(places int) string {
-	if places > 4 || places < 0 {
-		places = 4
-	}
-	format := "%." + strconv.Itoa(places) + "f"
+func (this Decimal4) Fmt(widthPrecision float64, currency ...string) string {
+	format := "%" + strconv.FormatFloat(widthPrecision, 'f', 1, 64) + "f"
 	fmtNum := fmt.Sprintf(format, float64(this)/10000)
-	if this < 10000000 && this > -10000000 { // 1000.0000
+	if len(currency) == 0 && Abs(this) < 10000000 { // < 1 thousand
 		return fmtNum
-	} else {
-		return addCommas([]byte(fmtNum))
 	}
+	if len(currency) == 0 {
+		return addCommas(fmtNum, "")
+	}
+	return addCommas(fmtNum, currency[0])
 }
 
-func addCommas(in []byte) string {
-	dotNdx := bytes.Index(in, []byte("."))
-	if dotNdx == -1 { // if no dot, assumed after last digit
-		dotNdx = len(in)
+var space byte = 32
+var comma byte = 44
+var minusSign byte = 45
+
+func addCommas(in, currency string) string {
+	inBytes := []byte(in)
+	spaceCount := bytes.Count(inBytes, []byte(" ")) // number of leading spaces
+	dotNdx := bytes.Index(inBytes, []byte("."))     // location of decimal point
+
+	if dotNdx == -1 { // if no decimal point, assumed after last digit
+		dotNdx = len(inBytes)
 	}
+	// commaLocations are indexes where a comma should be inserted
 	commaLocations := []int{dotNdx - 4, dotNdx - 7, dotNdx - 10, dotNdx - 13}
-	commaNdx := 0
+	commaNdx := 0 // used in loop below, indicates which commaLocation to use in comparison
 
-	out := make([]byte, len(in)+4)
-	outNdx := len(out)
+	outBytes := make([]byte, 30)
 
-	var comma byte = 44 // ascii values
-	var minusSign byte = 45
-
-	for i := len(in) - 1; i > -1; i-- {
-		outNdx--
-		if i == commaLocations[commaNdx] && in[i] != minusSign {
-			commaNdx++
-			out[outNdx] = comma
-			outNdx--
+	// load outBytes from inBytes, beginning with last byte, adding commas at commaLocations
+	outNdx := len(outBytes)
+	for i := len(inBytes) - 1; i > -1; i-- {
+		if inBytes[i] == space { // done when 1st leading space hit
+			break
 		}
-		out[outNdx] = in[i]
+		outNdx--
+		if i == commaLocations[commaNdx] && inBytes[i] != minusSign {
+			outBytes[outNdx] = comma
+			outNdx--
+			commaNdx++
+			if spaceCount > 0 {
+				spaceCount-- // for each comma added, reduce number of leading spaces
+			}
+		}
+		outBytes[outNdx] = inBytes[i]
 	}
-	return string(out[outNdx:]) // remove leading bytes not loaded
+	result := make([]byte, 0, 30)
+	if currency == "" {
+		if spaceCount > 0 {
+			result = append(result, inBytes[0:spaceCount]...) // add leading spaces
+		}
+	} else {
+		if spaceCount > 1 {
+			result = append(result, inBytes[0:spaceCount-1]...) // add leading spaces
+		}
+		symbol := []byte(currency)
+		result = append(result, symbol...) // add currency symbol
+	}
+	result = append(result, outBytes[outNdx:]...) // add outBytes to result, removing leading unloaded bytes
+	return string(result)
 }
 
 func New(x float64) Decimal4 {
-	if x < 0 {
-		return Decimal4((x - .00005) * 10000)
-	} else {
-		return Decimal4((x + .00005) * 10000)
+	//rounder := math.Copysign(.00005, x)  // if x < 0, rounder = -.00005 ... much slower, don't use
+	var rounder float64 = .00005
+	if x > 0 {
+		return Decimal4((x + rounder) * 10000)
+	} else if x < 0 {
+		return Decimal4((x - rounder) * 10000)
 	}
+	return 0
 }
 
 func NewDecimal6(x float64) Decimal6 {
-	if x < 0 {
-		return Decimal6((x - .0000005) * 1000000)
-	} else {
-		return Decimal6((x + .0000005) * 1000000)
+	var rounder float64 = .0000005
+	if x > 0 {
+		return Decimal6((x + rounder) * 1000000)
+	} else if x < 0 {
+		return Decimal6((x - rounder) * 1000000)
 	}
+	return 0
 }
 
 func Abs(x Decimal4) Decimal4 {
