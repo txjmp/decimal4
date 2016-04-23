@@ -73,7 +73,11 @@ Fmt(widthPrecision float64, currency ...string) string
 * returns *this* formatted with width.precision and comma thousands separators
 * if optional currency is specified, output will have symbol prefixed to value
 * see included currency examples (Dollar, Euro, Yen, ...) at top of decimal4.go
-* example: d4Val.Fmt(12.2, Dollar) -> "   $1,234.56" 
+* examples:  
+
+    d4Val := Decimal4(12345600)
+    d4Val.Fmt(10.2, Dollar) -> " $1,234.56" 
+    d4Val.Fmt(.3) -> "1,234.560" 
 
 String() string
 * converts *this* to float64
