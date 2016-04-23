@@ -72,13 +72,14 @@ Truncate0(), Truncate1(), Truncate2(), Truncate3()
 Fmt(widthPrecision float64, currency ...string) string
 * returns *this* formatted with width.precision and comma thousands separators
 * if optional currency is specified, output will have symbol prefixed to value
-* see included currency examples (Dollar, Euro, Yen, ...) at top of decimal4.go
-* examples:  
-
-    d4Val := Decimal4(12345600)
-    d4Val.Fmt(10.2, Dollar) -> " $1,234.56" 
-    d4Val.Fmt(.3) -> "1,234.560" 
-
+* see included currency examples (Dollar, Euro, Yen, ...) at top of decimal4.go  
+  
+examples:  
+  
+    d4Val := Decimal4(12345600)  
+    d4Val.Fmt(10.2, Dollar) -> " $1,234.56"   
+    d4Val.Fmt(.3) -> "1,234.560"   
+  
 String() string
 * converts *this* to float64
 * returns output of fmt.Sprintf using Decimal4StringPlaces to set decimal places shown
