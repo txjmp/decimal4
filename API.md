@@ -4,9 +4,9 @@
 
 var Decimal4StringPlaces string = "4" // precision used by String method  
   
-const Dollar = "\u0024"
-const Euro = "\u20AC"
-const Yen = "\u00A5"
+const Dollar = "\u0024"  
+const Euro = "\u20AC"  
+const Yen = "\u00A5"  
 
 ### Types  
 
@@ -30,36 +30,36 @@ func NewDecimal6(x float64) Decimal6
 * receiver used by all: (this Decimal4)
 
 Multiply(x Decimal4)    
-* returns this * x, rounded to 4 places  
+* returns *this* * x, rounded to 4 places  
 
 MultiplyBig(x Decimal4)  
-* returns this * x, rounded to 4 places
-* the larger absolute value between this and x has last 2 decimal places truncated
+* returns *this* * x, rounded to 4 places
+* the larger absolute value between *this* and x has last 2 decimal places truncated
 * allows larger values than Multiply without causing overflow
 
 Multiply6(x Decimal6)  
-* returns this * x, rounded to 4 places
+* returns *this* * x, rounded to 4 places
 * x is type Decimal6, providing up to 6 decimal places precision
 * allows smaller values than Multiply without causing overflow
 
 MultiplyBig6(x Decimal6)  
-* returns this * x, rounded to 4 places
+* returns *this* * x, rounded to 4 places
 * x is type Decimal6, providing up to 6 decimal places precision
-* last 2 decimal places of this value are truncated
+* last 2 decimal places of *this* value are truncated
 * allows larger values than Multiply6 without causing overflow
 
 MultiplyInt(x int)  
-* returns this * x
+* returns *this* * x
 
 Divide(x Decimal4)  
-* returns this / x, rounded to 4 places
+* returns *this* / x, rounded to 4 places
 
 DivideBig(x Decimal4)  
-* returns this / x, 3 decimal places precision, no rounding
+* returns *this* / x, 3 decimal places precision, no rounding
 * allows larger values than Divide without causing overflow
 
 DivideInt(x int)  
-* returns this / x, rounded to 4 places
+* returns *this* / x, rounded to 4 places
 
 ---
 
@@ -78,7 +78,7 @@ Fmt(widthPrecision float64, currency ...string) string
 * if optional currency is specified, output will have symbol prefixed to value
 * see included currency examples (Dollar, Euro, Yen, ...) at top of decimal4.go  
   
-examples:  
+Fmt Examples:  
   
     d4Val := Decimal4(12345600)  
     d4Val.Fmt(10.2, Dollar) -> " $1,234.56"   
