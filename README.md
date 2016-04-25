@@ -38,9 +38,12 @@ This package provides decimal math using integers.
 ###Comments on New() function:
   
 Requires 1 parameter, a float64, and returns a Decimal4 (int64) value. Based on extensive testing, it returns an accurate value (rounded to 4 decimals) with the exception of very large values (testing indicates over 100 billion, but I have not tested every value). When rounded to 2 decimal places, even very large values will probably be correct (don't know limits/exceptions). If you need to create a new very large Decimal4 value and don't trust New() to be accurate to the required decimal places, type convert an int64 or literal value. Remember, the last 4 digits are for decimal places. Example:  
-    billion := Decimal4(10000000000000)  // 13 zeros
 
-#[API](https://github.com/txjmp/decimal4/blob/master/API.md)
+    billion := Decimal4(10000000000000)     // 13 zeros  
+ 
+--- 
+#[API](https://github.com/txjmp/decimal4/blob/master/API.md)  
+---  
 
 ##Example  
   
