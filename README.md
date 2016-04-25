@@ -1,6 +1,12 @@
 #Go Decimal4 Package
 
 This package provides decimal math using integers. 
+  
+To Install: go get github.com/txjmp/decimal4  
+  
+###Status
+
+Passing all [tests](https://github.com/txjmp/decimal4/blob/master/decimal4_test.go). Need feedback on design, usability, features, and bugs.  
 
 ###Goals
 1. Decimal accuracy
@@ -41,9 +47,7 @@ Requires 1 parameter, a float64, and returns a Decimal4 (int64) value. Based on 
 
     billion := Decimal4(10000000000000)     // 13 zeros  
  
---- 
-#[API](https://github.com/txjmp/decimal4/blob/master/API.md)  
----  
+##[Link To API](https://github.com/txjmp/decimal4/blob/master/API.md)    
 
 ##Example  
   
