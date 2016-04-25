@@ -39,22 +39,31 @@ This package provides decimal math using integers.
   
 Requires 1 parameter, a float64, and returns a Decimal4 (int64) value. Based on extensive testing, it returns an accurate value (rounded to 4 decimals) with the exception of very large values (testing indicates over 100 billion, but I have not tested every value). When rounded to 2 decimal places, even very large values will probably be correct (don't know the limit). If you need to create a new very large Decimal4 value and don't trust New() to be accurate to the required decimal places, type convert an int64 or literal value. Remember, the last 4 digits are for decimal places. For this example, use 13 zeros: billion := Decimal4(10000000000000).
 
+[API](https://github.com/txjmp/decimal4/blob/master/API.md)
+
 ##Example
 
+package main
+
+import "fmt"
+import d4 "github.com/txjmp/decimal4"
+
+func main() {
     inputs := []float64{500.0025, 200.0005, 299.997}
 
-    data := make([]Decimal4, len(inputs))
+    data := make([]d4.Decimal4, len(inputs))
     for i, v := range inputs {
-        data[i] = Decimal4.New(v)
+        data[i] = d4.New(v)
     }
-    var total Decimal4
+    var total d4.Decimal4
     for _, v := range data {
         total += v
     }
     average := total.DivideInt(len(data))
-    
-    fmt.Printf("total: %s  average: %s", total.Fmt(.4), average)
-    
-    output -> total: 1,000.0000  average: 333.3333
 
-API - https:/
+    fmt.Printf("total: %s  average: %s", total.Fmt(.4), average)
+
+    // Output:
+    // total: 1,000.0000  average: 333.3333
+}
+
