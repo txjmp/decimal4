@@ -21,7 +21,7 @@ var Decimal4StringPlaces string = "4" // precision used by String method
 type Decimal4 int64
 type Decimal6 int64
 
-// Returns product of this * x, rounded to 4 decimal places
+// Multiply returns product of this * x, rounded to 4 decimal places.
 func (this Decimal4) Multiply(x Decimal4) Decimal4 {
 	a := this * x
 	if a == 0 {
@@ -38,11 +38,30 @@ func (this Decimal4) Multiply(x Decimal4) Decimal4 {
 	return a / 10000
 }
 
-// M is a fast version of Multiply, no rounding, no check for overflow
+// MultRound2 returns product of this * x, rounded to 2 decimal places.
+func (this Decimal4) MultRound2(x Decimal4) Decimal4 {
+	a := this * x
+	if a == 0 {
+		return 0
+	}
+	if a/x != this {
+		log.Panic("Decimal4 MultRound2 Overflow, this=", this, " x=", x)
+	}
+	if a > 0 {
+		a += 500000
+	} else {
+		a -= 500000
+	}
+	return (a / 1000000) * 100
+}
+
+// M is a fast version of Multiply, no rounding, no check for overflow.
 func (this Decimal4) M(x Decimal4) Decimal4 {
 	return (this * x) / 10000
 }
 
+// Multiply6 returns product of this * x rounded to 4 decimal places.
+// Parameter x is type Decimal6, providing up to 6 places precision.
 func (this Decimal4) Multiply6(x Decimal6) Decimal4 {
 	a := Decimal6(this) * x
 	if a == 0 {
@@ -59,9 +78,8 @@ func (this Decimal4) Multiply6(x Decimal6) Decimal4 {
 	return Decimal4(a / 1000000)
 }
 
-// MultiplyBig - Allows for a larger maximum value (before exceeding int64 max).
-// Last 2 decimal places are truncated on largest input value
-// Intermediate product value will only contain 6 implied decimal places rather than 8.
+// MultiplyBig allows for a larger maximum value than Multiply (before exceeding int64 max).
+// Last 2 decimal places are truncated on largest input value.
 func (this Decimal4) MultiplyBig(x Decimal4) Decimal4 {
 	var a, b, c Decimal4
 	if Abs(this) > Abs(x) {
@@ -87,6 +105,8 @@ func (this Decimal4) MultiplyBig(x Decimal4) Decimal4 {
 	return c / 100
 }
 
+// MultiplyBig6 allows for a larger maximum value than Multiply6 (before exceeding int64 max).
+// Last 2 decimal places are truncated on this value.
 func (this Decimal4) MultiplyBig6(x Decimal6) Decimal4 {
 	a := Decimal6(this / 100) // knock off last 2 decimal places
 	b := a * x
@@ -104,6 +124,8 @@ func (this Decimal4) MultiplyBig6(x Decimal6) Decimal4 {
 	return Decimal4(b / 10000)
 }
 
+// MultiplyInt returns product of this * x.
+// Parameter x is type int.
 func (this Decimal4) MultiplyInt(x int) Decimal4 {
 	a := int64(this) * int64(x)
 	if a == 0 {
@@ -115,7 +137,7 @@ func (this Decimal4) MultiplyInt(x int) Decimal4 {
 	return Decimal4(a)
 }
 
-// 4 decimal place precision with rounding
+// Divide returns quotient of this / x rounded to 4 decimal places.
 func (this Decimal4) Divide(x Decimal4) Decimal4 {
 	if this == 0 {
 		return 0
@@ -133,7 +155,7 @@ func (this Decimal4) Divide(x Decimal4) Decimal4 {
 	return b / 10
 }
 
-// 3 decimal place precision, no rounding
+// DivideBig returns quotient of this / x, 3 decimal places precision, no rounding.
 func (this Decimal4) DivideBig(x Decimal4) Decimal4 {
 	if this == 0 {
 		return 0
@@ -149,6 +171,8 @@ func (this Decimal4) DivideBig(x Decimal4) Decimal4 {
 	return b
 }
 
+// DivideInt returns quotient of this / x rounded to 4 decimal places.
+// Parameter x is type int.
 func (this Decimal4) DivideInt(x int) Decimal4 {
 	if this == 0 {
 		return 0

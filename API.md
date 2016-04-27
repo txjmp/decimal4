@@ -28,13 +28,16 @@ func NewDecimal6(x float64) Decimal6
 ###Decimal4 Computation Methods 
 
 * all return a single Decimal4 value
-* all panic on overflow 
+* all panic on overflow (except M)
 * Decimal4 values have implied 4 decimal places
 * Decimal6 values have implied 6 decimal places
 * receiver used by all: (this Decimal4)
 
 Multiply(x Decimal4)    
 * returns *this* * x, rounded to 4 places  
+
+MultRound2(x Decimal4)    
+* returns *this* * x, rounded to 2 places  
 
 M(x Decimal4)    
 * a fast version of Multiply
@@ -84,7 +87,7 @@ Truncate0(), Truncate1(), Truncate2(), Truncate3()
 Fmt(widthPrecision float64, currency ...string) string
 * returns *this* formatted with width.precision and comma thousands separators
 * if optional currency is specified, output will have symbol prefixed to value
-* see included currency examples (Dollar, Euro, Yen, ...) at top of decimal4.go  
+* see included currency examples (Dollar, Euro, Yen, ...) at top
   
 Fmt Examples:  
   

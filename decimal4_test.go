@@ -117,6 +117,45 @@ func TestMultiply(t *testing.T) {
 	}
 }
 
+func TestMultRound2(t *testing.T) {
+	var max float64 = float64(math.MaxInt64 / 100000000) // > 92 billion
+	var min float64 = float64(math.MinInt64 / 100000000) // < -92 billion
+	t.Log("multiply max:", max, "min: ", min)
+	data := []data{
+		{0, 0, 0},
+		{0, 1, 0},
+		{1, 0, 0},
+		{1, 1, 1},
+		{-1, 1, -1},
+		{-1, -1, 1},
+		{100000, .1, 10000},
+		{100000, .0001, 10},
+		{99999999.99, 1, 99999999.99},
+		{555.5555, 333.3333, 185185.15},
+		{.5555, .5555, .31},
+		{.1111, .1111, .01},
+		{9999.9999, 9999.9999, 99999998},
+		{4500000, 20000, 90000000000}, // 90,000,000,000
+		{-7321907.6324, -32.3976, 237212234.71},
+		{8888.8888, -1, -8888.89},
+		{456209.4178, 278.6814, 127137079.25},
+		{100.75, 341, 34355.75},
+		{max, 1, max},
+		{min, 1, min},
+		//{max + 1, 1, max+1}, // should cause overflow panic
+		//{min - 1, 1, min-1}, // should cause overflow panic
+	}
+	var a, b, c Decimal4
+	for i, v := range data {
+		a = New(v.a)
+		b = New(v.b)
+		c = a.MultRound2(b)
+		if c != New(v.c) {
+			t.Errorf("data[%d]: c should be %f, but is %s", i, v.c, c)
+		}
+	}
+}
+
 func TestM(t *testing.T) {
 	var max float64 = float64(math.MaxInt64 / 100000000) // > 92 billion
 	var min float64 = float64(math.MinInt64 / 100000000) // < -92 billion
@@ -158,27 +197,33 @@ func TestM(t *testing.T) {
 func TestMultiplyBig(t *testing.T) {
 	var max float64 = float64(math.MaxInt64 / 1000000) // > 9.2 trillion
 	t.Log("multiplyBig max:", max)
-	data := []data{
-		{0, 0, 0},
-		{1, 1, 1},
-		{-1, 1, -1},
-		{100000000, .1, 10000000},
-		{999999999999.99, 1, 999999999999.99},
-		{1000000000000.01, 1, 1000000000000.01}, // 1 trillion
-		{12345.67, 12345.67, 152415567.7489},
-		{-5000.0099, 2, -10000}, // largest abs val should have 2 places truncated
-		{83337222.0001, .0001, 8333.7222},
-		//	{123999.4567, 7654321.0025, 949131645407.4007},
-		{max, 1, max},
-		//{max + 1, 1, 0}, // should cause overflow panic
+	type input struct {
+		a float64
+		b float64
+		c Decimal4
+	}
+	data := []input{
+		{0, 0, 00000},
+		{1, 1, 10000},
+		{-1, 1, -10000},
+		{100000000, .1, 100000000000},
+		{999999999999.99, 1, 9999999999999900},
+		{1000000000000.01, 1, 10000000000000100}, // 1 trillion
+		{12345.67, 12345.67, 1524155677489},
+		{-5000.0099, 2, -100000000}, // largest abs val should have 2 places truncated
+		{83337222.0001, .0001, 83337222},
+		{123999.4567, 7654321.0025, 9491316454074007},
+		{803445821.1, 372.4701, 2992595453296991},
+		{max, 1, 92233720368540000},
+		// {max + 1, 1, 0}, // should cause overflow panic - verified 4/27/2016
 	}
 	var a, b, c Decimal4
 	for i, v := range data {
 		a = New(v.a)
 		b = New(v.b)
 		c = a.MultiplyBig(b)
-		if c != New(v.c) {
-			t.Errorf("data[%d]: c should be %.4f, but is %s", i, v.c, c)
+		if c != v.c {
+			t.Errorf("data[%d]: c should be %s, but is %s", i, v.c, c)
 		}
 	}
 }
@@ -226,6 +271,7 @@ func TestMultiplyBig6(t *testing.T) {
 		{1000000, 10.000375, 10000375},
 		{987654.43, .987654, 975460.8484},
 		{9000000000, -1.000001, -9000009000},
+		{803445821.12, 72.470195, 58225875328.5015},
 		{max, 1, max},
 		//{max + 1, 1, 0}, // should cause overflow panic (verified 4/15/2016)
 	}
@@ -359,9 +405,10 @@ func TestFmt(t *testing.T) {
 		{11111, 5.2, "", " 1.11"},
 		{-233987654, 13.4, Dollar, "$-23,398.7654"},
 		{-7654, 13.4, Dollar, "     $-0.7654"},
-		{1234567891239, 15.2, Dollar, "$123,456,789.12"},
+		{1234567891239, 17.2, Dollar, "  $123,456,789.12"},
 		{1234567891239, 16.3, Dollar, "$123,456,789.124"},
 		{91234567891239, 18.4, "", "9,123,456,789.1239"},
+		{9123456789551292, 20.3, "", " 912,345,678,955.129"},
 		{12345600, 10.2, Dollar, " $1,234.56"},
 		{12345600, .3, "", "1,234.560"},
 	}
