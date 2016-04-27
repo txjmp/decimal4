@@ -20,11 +20,8 @@ var Decimal4StringPlaces string = "4" // precision used by String method
 
 type Decimal4 int64
 type Decimal6 int64
-type Show struct { // optional parameter for Format method
-	Width    int
-	Currency string
-}
 
+// Returns product of this * x, rounded to 4 decimal places
 func (this Decimal4) Multiply(x Decimal4) Decimal4 {
 	a := this * x
 	if a == 0 {
@@ -39,6 +36,11 @@ func (this Decimal4) Multiply(x Decimal4) Decimal4 {
 		a -= 5000
 	}
 	return a / 10000
+}
+
+// M is a fast version of Multiply, no rounding, no check for overflow
+func (this Decimal4) M(x Decimal4) Decimal4 {
+	return (this * x) / 10000
 }
 
 func (this Decimal4) Multiply6(x Decimal6) Decimal4 {
@@ -272,7 +274,7 @@ func addCommas(in, currency string) string {
 	commaLocations := []int{dotNdx - 4, dotNdx - 7, dotNdx - 10, dotNdx - 13}
 	commaNdx := 0 // used in loop below, indicates which commaLocation to use in comparison
 
-	outBytes := make([]byte, 30)
+	outBytes := make([]byte, 50)
 
 	// load outBytes from inBytes, beginning with last byte, adding commas at commaLocations
 	outNdx := len(outBytes)
@@ -291,7 +293,7 @@ func addCommas(in, currency string) string {
 		}
 		outBytes[outNdx] = inBytes[i]
 	}
-	result := make([]byte, 0, 30)
+	result := make([]byte, 0, 50)
 	if currency == "" {
 		if spaceCount > 0 {
 			result = append(result, inBytes[0:spaceCount]...) // add leading spaces
@@ -329,24 +331,24 @@ func NewDecimal6(x float64) Decimal6 {
 }
 
 func Abs(x Decimal4) Decimal4 {
-	if x > 0 {
-		return x
-	} else if x < 0 {
+	if x < 0 {
 		return -x
 	}
-	return 0
+	return x
 }
 
-// --- funcs that round float numbers ------------------------
-func Exact2(x float64) float64 {
+// RoundFloat2 - round float64 to 2 decimal places
+func RoundFloat2(x float64) float64 {
 	var multiplier float64 = 100
 	var rounder float64 = .005
 	var intX int64 = int64((x + rounder) * multiplier)
 	return float64(intX) / multiplier
 }
-func Exact(x float64, dec int) float64 {
-	var multiplier float64 = math.Pow(10, float64(dec))         // 1, 10, 100, etc.
-	var rounder float64 = math.Pow(10, float64((dec+1)*-1)) * 5 // .5, .05, .005, etc.
+
+// RoundFloat - round float64 to precision decimal places
+func RoundFloat(x float64, precision int) float64 {
+	var multiplier float64 = math.Pow(10, float64(precision))         // 1, 10, 100, etc.
+	var rounder float64 = math.Pow(10, float64((precision+1)*-1)) * 5 // .5, .05, .005, etc.
 	var intX int64 = int64((x + rounder) * multiplier)
 	return float64(intX) / multiplier
 }

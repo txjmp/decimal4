@@ -10,7 +10,7 @@ func Example2() {
 		limit Decimal4
 		rate  Decimal6
 	}
-	// rates, as would typically be stored in database
+	// values, as would typically be stored in database
 	// **WARNING** DON'T USE LEADING ZEROS IN LITERALS
 	rates := []limitRate{
 		{1000000000, 31250}, // 100,000.0000 - 3 1/8%

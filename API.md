@@ -1,13 +1,17 @@
 #Decimal4 API
 
-### Global Public Variables
+### Global Public Variables & Constants
 
 var Decimal4StringPlaces string = "4" // precision used by String method  
   
 const Dollar = "\u0024"  
 const Euro = "\u20AC"  
 const Yen = "\u00A5"  
-
+const Yuan = "\u00A5"  
+const Rupee = "\u20B9"  
+const Ruble = "\u20BD"  
+const Pound = "\u00A3"  
+  
 ### Types  
 
 type Decimal4 int64  
@@ -31,6 +35,10 @@ func NewDecimal6(x float64) Decimal6
 
 Multiply(x Decimal4)    
 * returns *this* * x, rounded to 4 places  
+
+M(x Decimal4)    
+* a fast version of Multiply
+* no rounding (result truncated after 4th decimal), no check for overflow  
 
 MultiplyBig(x Decimal4)  
 * returns *this* * x, rounded to 4 places

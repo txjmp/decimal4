@@ -100,6 +100,7 @@ func TestMultiply(t *testing.T) {
 		{4500000, 20000, 90000000000}, // 90,000,000,000
 		{-7321907.6324, -32.3976, 237212234.7114},
 		{8888.8888, -1, -8888.8888},
+		{123.4567, 7654321.0025, 944977211.7093},
 		{max, 1, max},
 		{min, 1, min},
 		//{max + 1, 1, max+1}, // should cause overflow panic
@@ -110,6 +111,44 @@ func TestMultiply(t *testing.T) {
 		a = New(v.a)
 		b = New(v.b)
 		c = a.Multiply(b)
+		if c != New(v.c) {
+			t.Errorf("data[%d]: c should be %f, but is %s", i, v.c, c)
+		}
+	}
+}
+
+func TestM(t *testing.T) {
+	var max float64 = float64(math.MaxInt64 / 100000000) // > 92 billion
+	var min float64 = float64(math.MinInt64 / 100000000) // < -92 billion
+	t.Log("multiply max:", max, "min: ", min)
+	data := []data{
+		{0, 0, 0},
+		{0, 1, 0},
+		{1, 0, 0},
+		{1, 1, 1},
+		{-1, 1, -1},
+		{-1, -1, 1},
+		{100000, .1, 10000},
+		{100000, .0001, 10},
+		{99999999.99, 1, 99999999.99},
+		{555.5555, 333.3333, 185185.1481},
+		{.5555, .5555, .3085},
+		{.1111, .1111, .0123},
+		{9999.9999, 9999.9999, 99999998.0000},
+		{4500000, 20000, 90000000000}, // 90,000,000,000
+		{-7321907.6324, -32.3976, 237212234.7114},
+		{8888.8888, -1, -8888.8888},
+		{123.4567, 7654321.0025, 944977211.7093},
+		{max, 1, max},
+		{min, 1, min},
+		//{max + 1, 1, max+1}, // should cause overflow panic
+		//{min - 1, 1, min-1}, // should cause overflow panic (verified apr182016)
+	}
+	var a, b, c Decimal4
+	for i, v := range data {
+		a = New(v.a)
+		b = New(v.b)
+		c = a.M(b)
 		if c != New(v.c) {
 			t.Errorf("data[%d]: c should be %f, but is %s", i, v.c, c)
 		}
@@ -129,6 +168,7 @@ func TestMultiplyBig(t *testing.T) {
 		{12345.67, 12345.67, 152415567.7489},
 		{-5000.0099, 2, -10000}, // largest abs val should have 2 places truncated
 		{83337222.0001, .0001, 8333.7222},
+		//	{123999.4567, 7654321.0025, 949131645407.4007},
 		{max, 1, max},
 		//{max + 1, 1, 0}, // should cause overflow panic
 	}
@@ -138,7 +178,7 @@ func TestMultiplyBig(t *testing.T) {
 		b = New(v.b)
 		c = a.MultiplyBig(b)
 		if c != New(v.c) {
-			t.Errorf("data[%d]: c should be %f, but is %s", i, v.c, c)
+			t.Errorf("data[%d]: c should be %.4f, but is %s", i, v.c, c)
 		}
 	}
 }
@@ -156,6 +196,7 @@ func TestMultiply6(t *testing.T) {
 		{1000000, 10.000375, 10000375},
 		{987654.4321, .987654, 975460.8505},
 		{-33.3333, 73684.009999, -2456131.2105},
+		//	{123.4567, 654321.002548, 949131645717.3993},		=====
 		{max, 1, max},
 		//{max + 1, 1, max + 1}, // should cause overflow panic, verified 4/18/2016
 	}
@@ -238,6 +279,7 @@ func TestDivide(t *testing.T) {
 		{2222222.2222, 2222222.2222, 1},
 		{1234567.0001, .123, 10037130.0821},
 		{999, .4567, 2187.4316},
+		{944977211.7093, 123.4567, 7654321.0025},
 		{max, 1, max},
 	}
 	var a, b, c Decimal4
@@ -409,42 +451,30 @@ func TestTruncate(t *testing.T) {
 
 func Benchmark_Multiply(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		var c Decimal4
 		a := New(123.4567)
 		b := New(123.4567)
 		for i := 0; i < 1000000; i++ { // 1 million iterations
-			c = a.Multiply(b)
+			a.Multiply(b)
 		}
-		if c == 0 { // need ref to c for compile
-			c = 0
+	}
+}
+
+func Benchmark_M(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+		a := New(123.4567)
+		b := New(123.4567)
+		for i := 0; i < 1000000; i++ { // 1 million iterations
+			a.M(b)
 		}
 	}
 }
 
 func Benchmark_Divide(b *testing.B) {
 	for n := 0; n < b.N; n++ {
-		var c Decimal4
 		a := New(123.4567)
 		b := New(123.4567)
 		for i := 0; i < 1000000; i++ { // 1 million iterations
-			c = a.Divide(b)
-		}
-		if c == 0 { // need ref to c for compile
-			c = 0
-		}
-	}
-}
-
-func Benchmark_Add(b *testing.B) {
-	for n := 0; n < b.N; n++ {
-		var c Decimal4
-		a := New(123.4567)
-		b := New(123.4567)
-		for i := 0; i < 1000000; i++ { // 1 million iterations
-			c = a + b
-		}
-		if c == 0 { // need ref to c for compile
-			c = 0
+			a.Divide(b)
 		}
 	}
 }
