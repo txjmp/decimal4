@@ -74,4 +74,7 @@ Requires 1 parameter, a float64, and returns a Decimal4 (int64) value. Based on 
         // Output:
         // total: 1,000.0000  average: 333.3333
     }
+  
+##Roll Your Own Decimal Module  
 
+Methods in decimal4.go have few parameters. This design reduces method code size, complexity, and need for returning errors. It also limits the functionality of each method. You may need a multiply method that truncates to 3 decimal places. The desired result can be accomplished by chaining two methods together, but performance won't be so great. Creating your own decimal module might be the answer. Use decimal4.go for examples to speed up the process.
