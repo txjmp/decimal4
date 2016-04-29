@@ -79,10 +79,13 @@ DivideInt(x int)
 Round0(), Round1(), Round2(), Round3()
 * no parameters
 * each rounds value of *this* to specified decimal places and returns Decimal4
+* last kept decimal place value rounded up if following place value >= 5
+* can be chained to computational methods: c = a.Multiply(b).Round3()
 
 Truncate0(), Truncate1(), Truncate2(), Truncate3()
 * no parameters
 * each truncates value of *this* to specified decimal places and returns Decimal4
+* can be chained to computational methods: c = a.Multiply(b).Truncate3()
 
 Fmt(widthPrecision float64, currency ...string) string
 * returns *this* formatted with width.precision and comma thousands separators
