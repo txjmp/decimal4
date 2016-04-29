@@ -334,22 +334,22 @@ func addCommas(in, currency string) string {
 }
 
 func New(x float64) Decimal4 {
-	//rounder := math.Copysign(.00005, x)  // if x < 0, rounder = -.00005 ... much slower, don't use
-	var rounder float64 = .00005
+	//fixer := math.Copysign(.00003, x)  // if x < 0, fixer = -.00003 ... much slower, don't use
+	var fixer float64 = .00003
 	if x > 0 {
-		return Decimal4((x + rounder) * 10000)
+		return Decimal4((x + fixer) * 10000)
 	} else if x < 0 {
-		return Decimal4((x - rounder) * 10000)
+		return Decimal4((x - fixer) * 10000)
 	}
 	return 0
 }
 
 func NewDecimal6(x float64) Decimal6 {
-	var rounder float64 = .0000005
+	var fixer float64 = .0000003
 	if x > 0 {
-		return Decimal6((x + rounder) * 1000000)
+		return Decimal6((x + fixer) * 1000000)
 	} else if x < 0 {
-		return Decimal6((x - rounder) * 1000000)
+		return Decimal6((x - fixer) * 1000000)
 	}
 	return 0
 }
